@@ -1,0 +1,8 @@
+/target
+Cargo.lock
+
+.envrc
+
+/dist
+/macos/Resources/bin/*
+!/macos/Resources/bin/.gitkeep

@@ -1,0 +1,20 @@
+[package]
+name = "genscribe"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+eframe = "0.29"
+egui = "0.29"
+whisper-rs = { version = "0.13", features = ["metal"] }
+hound = "3.5"
+reqwest = { version = "0.12", features = ["blocking", "stream"] }
+anyhow = "1"
+dirs = "5"
+url = "2"
+arboard = "3"
+rfd = "0.15"
+
+[profile.release]
+lto = true
+codegen-units = 1

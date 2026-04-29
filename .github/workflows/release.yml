@@ -1,0 +1,56 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  dmg:
+    name: Build DMG (Apple Silicon)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust (aarch64-apple-darwin)
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup target add aarch64-apple-darwin
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Fetch helper binaries (arm64)
+        run: |
+          set -euxo pipefail
+          mkdir -p macos/Resources/bin
+
+          # yt-dlp arm64 macOS binary (official release asset)
+          curl -L --fail \
+            -o macos/Resources/bin/yt-dlp \
+            https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos
+          chmod +x macos/Resources/bin/yt-dlp
+
+          # ffmpeg arm64 static build from osxexperts.net (Apple Silicon)
+          curl -L --fail -o /tmp/ffmpeg.zip \
+            "https://www.osxexperts.net/ffmpeg711arm.zip"
+          unzip -o /tmp/ffmpeg.zip -d /tmp/ffmpeg-unpack
+          # The archive contains a single `ffmpeg` binary at root.
+          mv /tmp/ffmpeg-unpack/ffmpeg macos/Resources/bin/ffmpeg
+          chmod +x macos/Resources/bin/ffmpeg
+
+      - name: Build app + DMG
+        run: ./macos/build_dmg.sh
+
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: genscribe-arm64-dmg
+          path: dist/*.dmg
+
+      - name: Publish to Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.dmg
+          generate_release_notes: true
